@@ -14,7 +14,7 @@
 - Group admins see the full member list of their groups, and can add any Nextcloud account or remove members.
 
 Group admins are designated by platform admins in the app settings. They are not the Nextcloud group admins (subadmins): they only manage the membership of their groups, and get no right on the accounts themselves.]]></description>
-	<version>0.3.0</version>
+	<version>0.4.0</version>
 	<licence>agpl</licence>
 	<author mail="seb@smarinier.net">Sébastien Marinier</author>
 	<namespace>DelegateGroups</namespace>

@@ -1,6 +1,6 @@
 {
 	"name": "delegate_groups",
-	"version": "0.1.0",
+	"version": "0.4.0",
 	"description": "My Groups: join groups on request, group admins manage their members",
 	"private": true,
 	"type": "module",
