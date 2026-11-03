@@ -187,33 +187,54 @@ class MembershipService {
 	}
 
 	/**
-	 * Members and pending requests of a group, for one of its admins
+	 * Members of a group:
+	 * - for one of its admins: with the pending requests, and the emails when admin_see_emails is on;
+	 * - for one of its members, when users_see_members is on: the members only.
 	 */
-	public function getMembers(IUser $admin, string $groupId): array {
-		$group = $this->getAdministeredGroup($admin, $groupId);
+	public function getMembers(IUser $viewer, string $groupId): array {
+		$group = $this->groupManager->get($groupId);
+		if ($group === null || !$this->canSeeMembers($viewer, $group)) {
+			// Same answer for a missing group: group ids cannot be probed
+			throw MembershipException::forbidden($this->l->t('You cannot see the members of this group.'));
+		}
+		$isAdmin = $this->groupAdmins->isGroupAdmin($viewer, $group);
+		$showEmails = $isAdmin && $this->settings->adminSeeEmails();
 		$adminIds = $this->getAdminIds($group);
 
 		$members = [];
 		foreach ($group->getUsers() as $user) {
-			$members[] = [
+			$member = [
+				// Needed by the avatars, even when the view does not show it
 				'id' => $user->getUID(),
 				'displayName' => $user->getDisplayName(),
 				'isAdmin' => isset($adminIds[$user->getUID()]),
-				'isSelf' => $user->getUID() === $admin->getUID(),
+				'isSelf' => $user->getUID() === $viewer->getUID(),
 			];
+			if ($showEmails) {
+				$member['email'] = $user->getEMailAddress();
+			}
+			$members[] = $member;
 		}
 		usort($members, fn ($a, $b) => strcasecmp($a['displayName'], $b['displayName']));
 
 		$requests = [];
-		foreach ($this->mapper->findPendingByGroup($groupId) as $request) {
-			$requests[] = $this->serializeRequest($request, $group);
+		if ($isAdmin) {
+			foreach ($this->mapper->findPendingByGroup($groupId) as $request) {
+				$requests[] = $this->serializeRequest($request, $group);
+			}
 		}
 
 		return [
-			'group' => $this->serializeGroup($group, $admin),
+			'group' => $this->serializeGroup($group, $viewer),
 			'members' => $members,
 			'requests' => $requests,
+			'showEmails' => $showEmails,
 		];
+	}
+
+	private function canSeeMembers(IUser $user, IGroup $group): bool {
+		return $this->groupAdmins->isGroupAdmin($user, $group)
+			|| ($this->settings->usersSeeMembers() && $group->inGroup($user));
 	}
 
 	public function addMember(IUser $admin, string $groupId, string $userId): void {
@@ -359,6 +380,7 @@ class MembershipService {
 			'memberCount' => $this->countMembers($group),
 			'isMember' => $group->inGroup($user),
 			'isAdmin' => $isAdmin,
+			'canSeeMembers' => $isAdmin || ($this->settings->usersSeeMembers() && $group->inGroup($user)),
 			'pendingCount' => $isAdmin ? count($this->mapper->findPendingByGroup($group->getGID())) : 0,
 		];
 	}

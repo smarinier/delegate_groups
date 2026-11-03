@@ -23,6 +23,15 @@ A group admin of this app only manages the membership of their groups.
 - a group admin cannot remove themself, nor remove another group admin, from the group;
 - a group without any group admin cannot be opened, and is never offered for membership requests.
 
+## Options
+
+In *Administration settings › My Groups › General settings* (app config keys of `delegate_groups`):
+
+| Key | Default | Effect |
+|-----|---------|--------|
+| `users_see_members` | off | the members of a group see its member list (names and roles only: no account id, email nor action) |
+| `admin_see_emails`  | off | group admins see the email address of the members of their groups, with a `mailto:` button |
+
 ## Membership requests
 
 Platform admins choose the groups open to requests in *Administration settings › My Groups*
@@ -58,10 +67,11 @@ OCS endpoints under `/ocs/v2.php/apps/delegate_groups/api/v1/`:
 | DELETE | `requests/{id}`         | requester      |
 | POST   | `requests/{id}/accept`  | group admin    |
 | POST   | `requests/{id}/refuse`  | group admin    |
-| GET    | `members?groupId=`      | group admin    |
+| GET    | `members?groupId=`      | group admin, or member with `users_see_members` |
 | POST   | `members`               | group admin    |
 | DELETE | `members?groupId=&userId=` | group admin |
 | GET    | `users?groupId=&search=`| group admin    |
 | PUT    | `settings`              | platform admin |
+| PUT    | `settings/options`      | platform admin |
 | GET    | `admins/users?search=`  | platform admin |
 | PUT    | `admins`                | platform admin |

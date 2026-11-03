@@ -20,8 +20,9 @@
 			<RouterLink class="dg-breadcrumb dg-heading" :to="{ name: 'groups' }">{{ t('delegate_groups', 'My groups') }} ›</RouterLink>
 			<div class="dg-members__header">
 				<h2>{{ group.displayName }}</h2>
-				<RolePill admin :label="t('delegate_groups', 'You are an administrator')" />
-				<NcButton class="dg-members__add" variant="primary" @click="addOpen = true">
+				<RolePill v-if="manage" admin :label="t('delegate_groups', 'You are an administrator')" />
+				<RolePill v-else />
+				<NcButton v-if="manage" class="dg-members__add" variant="primary" @click="addOpen = true">
 					<template #icon>
 						<AccountPlusIcon :size="20" />
 					</template>
@@ -37,13 +38,19 @@
 
 			<NcTextField v-model="filter" class="dg-members__filter" :label="t('delegate_groups', 'Filter the members')" />
 
+			<!-- Members who are not admins see the list only: no account id, no email, no action -->
 			<table class="dg-table">
 				<thead>
 					<tr>
 						<th>{{ t('delegate_groups', 'Member') }}</th>
-						<th>{{ t('delegate_groups', 'Account') }}</th>
+						<th v-if="manage">
+							{{ t('delegate_groups', 'Account') }}
+						</th>
+						<th v-if="showEmails">
+							{{ t('delegate_groups', 'Email') }}
+						</th>
 						<th>{{ t('delegate_groups', 'Status') }}</th>
-						<th class="dg-actions">
+						<th v-if="manage" class="dg-actions">
 							{{ t('delegate_groups', 'Actions') }}
 						</th>
 					</tr>
@@ -57,6 +64,7 @@
 							</div>
 						</td>
 						<td>{{ request.user.id }}</td>
+						<td v-if="showEmails" />
 						<td>
 							<span class="dg-pill dg-pill--pending">{{ t('delegate_groups', 'Request of {date}', { date: formatDate(request.createdAt) }) }}</span>
 						</td>
@@ -80,18 +88,34 @@
 								</span>
 							</div>
 						</td>
-						<td>{{ member.id }}</td>
+						<td v-if="manage">
+							{{ member.id }}
+						</td>
+						<td v-if="showEmails" class="dg-members__email">
+							{{ member.email }}
+						</td>
 						<td>
 							<RolePill :admin="member.isAdmin" />
 						</td>
-						<td class="dg-actions">
-							<span :title="removeBlockedReason(member)">
-								<NcButton variant="tertiary"
-									:disabled="busy || !!removeBlockedReason(member)"
-									@click="removing = member">
-									{{ t('delegate_groups', 'Remove') }}
+						<td v-if="manage" class="dg-actions">
+							<div>
+								<NcButton v-if="showEmails && member.email"
+									variant="tertiary"
+									:href="'mailto:' + encodeURIComponent(member.email).replace(/%40/g, '@')"
+									:title="t('delegate_groups', 'Send an email to {user}', { user: member.displayName })"
+									:aria-label="t('delegate_groups', 'Send an email to {user}', { user: member.displayName })">
+									<template #icon>
+										<EmailOutlineIcon :size="20" />
+									</template>
 								</NcButton>
-							</span>
+								<span :title="removeBlockedReason(member)">
+									<NcButton variant="tertiary"
+										:disabled="busy || !!removeBlockedReason(member)"
+										@click="removing = member">
+										{{ t('delegate_groups', 'Remove') }}
+									</NcButton>
+								</span>
+							</div>
 						</td>
 					</tr>
 				</tbody>
@@ -124,6 +148,7 @@ import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
 import { computed, onMounted, ref } from 'vue'
 import AccountPlusIcon from 'vue-material-design-icons/AccountPlus.vue'
+import EmailOutlineIcon from 'vue-material-design-icons/EmailOutline.vue'
 import ShieldOffIcon from 'vue-material-design-icons/ShieldOff.vue'
 import api, { errorMessage } from '../api.js'
 import AddMemberDialog from '../components/AddMemberDialog.vue'
@@ -146,12 +171,18 @@ const busy = ref(false)
 const filter = ref('')
 const addOpen = ref(false)
 const removing = ref(null)
+const showEmails = ref(false)
+
+// Admins manage the group; members only see the list
+const manage = computed(() => !!group.value?.isAdmin)
 
 function matches(...values) {
 	const query = filter.value.trim().toLocaleLowerCase()
 	return !query || values.some((value) => value.toLocaleLowerCase().includes(query))
 }
-const filteredMembers = computed(() => members.value.filter((member) => matches(member.displayName, member.id)))
+const filteredMembers = computed(() => members.value.filter((member) => manage.value
+	? matches(member.displayName, member.id, member.email ?? '')
+	: matches(member.displayName)))
 const filteredRequests = computed(() => requests.value.filter((request) => matches(request.user.displayName, request.user.id)))
 
 function removeBlockedReason(member) {
@@ -170,6 +201,7 @@ async function reload() {
 		group.value = data.group
 		members.value = data.members
 		requests.value = data.requests
+		showEmails.value = data.showEmails
 		loadError.value = null
 	} catch (error) {
 		loadError.value = errorMessage(error, t('delegate_groups', 'Could not load the members of the group'))
@@ -229,6 +261,10 @@ onMounted(reload)
 .dg-members__filter {
 	max-width: 360px;
 	margin-bottom: calc(var(--default-grid-baseline) * 3);
+}
+
+.dg-members__email {
+	overflow-wrap: anywhere;
 }
 
 .dg-members__self {

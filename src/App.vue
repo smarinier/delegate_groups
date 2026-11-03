@@ -50,7 +50,7 @@
 				:loading="loading"
 				@join="joinOpen = true"
 				@changed="refresh" />
-			<GroupMembers v-else-if="route.name === 'group' && currentGroup?.isAdmin"
+			<GroupMembers v-else-if="route.name === 'group' && currentGroup?.canSeeMembers"
 				:key="groupId"
 				:group-id="groupId"
 				@changed="refresh" />
@@ -99,7 +99,8 @@ const requests = ref([])
 const loading = ref(true)
 const joinOpen = ref(false)
 
-// Admins manage the members of the group, members only see its card
+// Admins manage the members of the group; members see them when the platform allows it
+// (users_see_members), or else only its card
 const currentGroup = computed(() => groups.value.find((group) => group.id === groupId.value) ?? null)
 
 async function refresh() {

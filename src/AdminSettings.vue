@@ -3,6 +3,21 @@
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
+	<NcSettingsSection :name="t('delegate_groups', 'General settings')">
+		<NcFormBox class="dg-options">
+			<NcFormBoxSwitch :model-value="options.usersSeeMembers"
+				:label="t('delegate_groups', 'Users see the members of their groups')"
+				:description="t('delegate_groups', 'Each member of a group can see the list of its members, without their account ids or emails. Otherwise only the group admins see it.')"
+				:disabled="savingOptions"
+				@update:model-value="saveOption('usersSeeMembers', $event)" />
+			<NcFormBoxSwitch :model-value="options.adminSeeEmails"
+				:label="t('delegate_groups', 'Group admins see the members’ emails')"
+				:description="t('delegate_groups', 'Group admins see the email address of the members of the groups they manage, and can write to them from their mail app.')"
+				:disabled="savingOptions"
+				@update:model-value="saveOption('adminSeeEmails', $event)" />
+		</NcFormBox>
+	</NcSettingsSection>
+
 	<NcSettingsSection :name="t('delegate_groups', 'Group admins and membership requests')"
 		:description="t('delegate_groups', 'Designate the admins of each group, and choose the groups users can ask to join from the “My Groups” app. The group admins receive the requests.')">
 		<div class="dg-open-groups">
@@ -79,6 +94,8 @@ import { loadState } from '@nextcloud/initial-state'
 import { n, t } from '@nextcloud/l10n'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcFormBox from '@nextcloud/vue/components/NcFormBox'
+import NcFormBoxSwitch from '@nextcloud/vue/components/NcFormBoxSwitch'
 import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
@@ -90,6 +107,24 @@ import GroupAdminsDialog from './components/GroupAdminsDialog.vue'
 
 const groups = ref(loadState('delegate_groups', 'groups', []))
 const editedGroup = ref(null)
+const options = ref(loadState('delegate_groups', 'options', { usersSeeMembers: false, adminSeeEmails: false }))
+const savingOptions = ref(false)
+
+/**
+ * @param {string} key the option changed
+ * @param {boolean} value its new value
+ */
+async function saveOption(key, value) {
+	savingOptions.value = true
+	try {
+		options.value = await api.saveOptions({ ...options.value, [key]: value })
+		showSuccess(t('delegate_groups', 'Settings saved'))
+	} catch (error) {
+		showError(errorMessage(error, t('delegate_groups', 'Could not save the settings')))
+	} finally {
+		savingOptions.value = false
+	}
+}
 const openGroups = ref(loadState('delegate_groups', 'openGroups', []))
 const saving = ref(false)
 const filter = ref('')
@@ -134,6 +169,10 @@ async function toggle(groupId, open) {
 </script>
 
 <style lang="scss" scoped>
+.dg-options {
+	max-width: 700px;
+}
+
 .dg-open-groups {
 	max-width: 700px;
 	margin-bottom: calc(var(--default-grid-baseline) * 4);

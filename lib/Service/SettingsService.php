@@ -17,6 +17,10 @@ class SettingsService {
 	private array $PROTECTED_GROUPS = [];
 
 	private const KEY_OPEN_GROUPS = 'open_groups';
+	/** Members of a group see its member list (not only its admins) */
+	private const KEY_USERS_SEE_MEMBERS = 'users_see_members';
+	/** Group admins see the email address of the members of their groups */
+	private const KEY_ADMIN_SEE_EMAILS = 'admin_see_emails';
 	private const KEY_IGNORED_GROUPS = 'ignored_groups';
 
 	public function __construct(
@@ -54,6 +58,33 @@ class SettingsService {
 		$ids = array_values($ids);
 		$this->appConfig->setValueArray(Application::APP_ID, self::KEY_OPEN_GROUPS, $ids);
 		return $ids;
+	}
+
+	public function usersSeeMembers(): bool {
+		return $this->appConfig->getValueBool(Application::APP_ID, self::KEY_USERS_SEE_MEMBERS);
+	}
+
+	public function adminSeeEmails(): bool {
+		return $this->appConfig->getValueBool(Application::APP_ID, self::KEY_ADMIN_SEE_EMAILS);
+	}
+
+	/**
+	 * @return array{usersSeeMembers: bool, adminSeeEmails: bool}
+	 */
+	public function getOptions(): array {
+		return [
+			'usersSeeMembers' => $this->usersSeeMembers(),
+			'adminSeeEmails' => $this->adminSeeEmails(),
+		];
+	}
+
+	/**
+	 * @return array{usersSeeMembers: bool, adminSeeEmails: bool}
+	 */
+	public function setOptions(bool $usersSeeMembers, bool $adminSeeEmails): array {
+		$this->appConfig->setValueBool(Application::APP_ID, self::KEY_USERS_SEE_MEMBERS, $usersSeeMembers);
+		$this->appConfig->setValueBool(Application::APP_ID, self::KEY_ADMIN_SEE_EMAILS, $adminSeeEmails);
+		return $this->getOptions();
 	}
 
 	public function removeOpenGroup(string $groupId): void {

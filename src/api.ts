@@ -55,6 +55,7 @@ export default {
 	removeMember: (groupId, userId) => call('delete', 'members', { params: { groupId, userId }, confirm: true }),
 	searchUsers: (groupId, search) => call('get', 'users', { params: { groupId, search } }),
 	saveSettings: (openGroups) => call('put', 'settings', { data: { openGroups }, confirm: true }),
+	saveOptions: (options) => call('put', 'settings/options', { data: options, confirm: true }),
 	searchAdminCandidates: (search) => call('get', 'admins/users', { params: { search } }),
 	saveGroupAdmins: (groupId, userIds) => call('put', 'admins', { data: { groupId, userIds }, confirm: true }),
 }

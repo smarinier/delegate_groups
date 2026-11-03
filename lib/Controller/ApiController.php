@@ -96,7 +96,7 @@ class ApiController extends OCSController {
 	}
 
 	/**
-	 * Members of a group administered by the current user
+	 * Members of a group: for its admins, or for its members when they may see them (users_see_members)
 	 */
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/api/v1/members')]
@@ -142,6 +142,15 @@ class ApiController extends OCSController {
 	#[ApiRoute(verb: 'PUT', url: '/api/v1/settings')]
 	public function saveSettings(array $openGroups = []): DataResponse {
 		return new DataResponse(['openGroups' => $this->settings->setOpenGroupIds($openGroups)]);
+	}
+
+	/**
+	 * Platform admins only: general options of the app
+	 */
+	#[PasswordConfirmationRequired]
+	#[ApiRoute(verb: 'PUT', url: '/api/v1/settings/options')]
+	public function saveOptions(bool $usersSeeMembers = false, bool $adminSeeEmails = false): DataResponse {
+		return new DataResponse($this->settings->setOptions($usersSeeMembers, $adminSeeEmails));
 	}
 
 	/**

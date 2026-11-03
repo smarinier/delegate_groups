@@ -27,6 +27,7 @@ class Admin implements ISettings {
 	}
 
 	public function getForm(): TemplateResponse {
+		$this->initialState->provideInitialState('options', $this->settings->getOptions());
 		$this->initialState->provideInitialState('openGroups', $this->settings->getOpenGroupIds());
 		$this->initialState->provideInitialState('groups', $this->listGroups());
 		Util::addScript(Application::APP_ID, Application::APP_ID . '-admin');
