@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  - SPDX-FileCopyrightText: 2026 Sébastien Marinier
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>delegate_groups</id>
+	<name>My Groups</name>
+	<summary>Let users join groups on request, and let group admins manage their members</summary>
+	<description><![CDATA[**My Groups** gives every user a page listing the groups they belong to.
+
+- Users can ask to join the groups that platform admins opened to requests.
+- Group admins receive an email and a notification for each request, and can accept or refuse it.
+- Group admins see the full member list of their groups, and can add any Nextcloud account or remove members.
+
+Group admins are designated by platform admins in the app settings. They are not the Nextcloud group admins (subadmins): they only manage the membership of their groups, and get no right on the accounts themselves.]]></description>
+	<version>0.3.0</version>
+	<licence>agpl</licence>
+	<author mail="seb@smarinier.net">Sébastien Marinier</author>
+	<namespace>DelegateGroups</namespace>
+	<category>organization</category>
+	<bugs>https://github.com/smarinier/delegate_groups/issues</bugs>
+	<repository>https://github.com/smarinier/delegate_groups</repository>
+	<dependencies>
+		<nextcloud min-version="34" max-version="34"/>
+	</dependencies>
+	<settings>
+		<admin>OCA\DelegateGroups\Settings\Admin</admin>
+		<admin-section>OCA\DelegateGroups\Settings\AdminSection</admin-section>
+	</settings>
+	<navigations>
+		<navigation>
+			<name>My Groups</name>
+			<route>delegate_groups.page.index</route>
+			<icon>app.svg</icon>
+			<order>90</order>
+		</navigation>
+	</navigations>
+</info>
